@@ -10,13 +10,14 @@
 #include "myfunction.h"
 
 #define MAX_BUF_SIZE 1024 // Maximum size of UDP messages
-//#define SERVER_PORT 9876  // Server port
 
 int main(int argc, char *argv[]) {
 
+  //Variable for connection to server, ip and port
   int SERVER_PORT;
   char *SERVER_IP;
 
+  //Check if parameters is what i expective and relative print
   if (argc == 3) {
     printf("The argument supplied is %s\n", argv[1]); // IP
     SERVER_IP = argv[1];
@@ -30,6 +31,7 @@ int main(int argc, char *argv[]) {
     exit(0);
   }
 
+  //Now start configuration parameters for client
   struct sockaddr_in
       server_addr; // struct containing server address information
 
@@ -55,6 +57,7 @@ int main(int argc, char *argv[]) {
   char receivedData[MAX_BUF_SIZE]; // Data to be received
   char sendData[MAX_BUF_SIZE];     // Data to be sent
 
+  //open socket
   sfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
   if (sfd < 0) {
@@ -65,12 +68,12 @@ int main(int argc, char *argv[]) {
   }
 
   server_addr.sin_family = AF_INET;
-
   server_addr.sin_port = htons(SERVER_PORT);
   server_addr.sin_addr.s_addr = inet_addr(SERVER_IP);
 
   serv_size = sizeof(server_addr);
 
+  //Now start the cycle for send message
   while (!stop) {
 
     printf("Insert message:\n");
@@ -80,7 +83,7 @@ int main(int argc, char *argv[]) {
     printf("String going to be sent to server: %s\n", sendData);
 
     msgLen = countStrLen(sendData);
-
+    //the action for send message
     byteSent = sendto(sfd, sendData, msgLen, 0,
                       (struct sockaddr *)
 
@@ -88,14 +91,14 @@ int main(int argc, char *argv[]) {
                       sizeof(server_addr));
 
     printf("Bytes sent to server: %zd\n", byteSent);
-
+    //read relative response from server
     byteRecv = recvfrom(sfd, receivedData, MAX_BUF_SIZE, 0,
                         (struct sockaddr *)&server_addr, &serv_size);
 
     printf("Received from server: ");
 
     printData(receivedData, byteRecv);
-
+    //check if response is euqals to goodbye, if this is true close client connection
     if (strcmp(receivedData, "goodbye") == 0) {
       stop = 1;
     }

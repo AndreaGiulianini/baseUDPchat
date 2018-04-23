@@ -6,15 +6,20 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
+//For inet_toa
+#include <arpa/inet.h>
+#include <netinet/in.h>
+
 #include "myfunction.h"
 
 #define MAX_BUF_SIZE 1024 // Maximum size of UDP messages
-//#define SERVER_PORT 9876  // Server port
-int main(int argc, char *argv[]) {
 
+int main(int argc, char *argv[]) {
+  //Configuration variable for server
   int SERVER_PORT;
   char *SERVER_IP;
 
+  //Check if parameters is what i expective and relative print
   if (argc == 3) {
     printf("the argoument supplied is IP %s\n", argv[1]); // IP
     SERVER_IP = argv[1];
@@ -60,7 +65,6 @@ int main(int argc, char *argv[]) {
   //• Initialize server address information
   server_addr.sin_family = AF_INET;
   server_addr.sin_port = htons(SERVER_PORT); // Convert to network byte order
-
   server_addr.sin_addr.s_addr = INADDR_ANY; // Bind to any address
 
   br = bind(sfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
@@ -72,34 +76,33 @@ int main(int argc, char *argv[]) {
   }
   cli_size = sizeof(client_addr);
 
+  //cycle for receive message, in this case we can see the gestion of message is sequencile
   for (;;) {
-
+    //read message
     byteRecv = recvfrom(sfd, receivedData, MAX_BUF_SIZE, 0,
                         (struct sockaddr *)&client_addr, &cli_size);
-
+    //check if message is "normal" or a error
     if (byteRecv == -1) {
-
       perror("recvfrom");
-
       exit(EXIT_FAILURE);
     }
 
-    printf("Received data: ");
-
+    printf("Received data Socket(%s:%d): \n", inet_ntoa(client_addr.sin_addr),
+               client_addr.sin_port);
     printData(receivedData, byteRecv);
 
+    //compare if data receive is equals to exit,
+    //in that case we response with "goodbye" string
+    //in all case we respond with the thame message of client
     if (strncmp(receivedData, "exit", byteRecv) == 0) {
 
-      printf("Command to stop server received\n");
       byteSent = sendto(sfd, "goodbye", 7, 0,
                         (struct sockaddr *)
 
                         &client_addr,
                         sizeof(client_addr));
-
-      // break;
     } else {
-      // convertToUpperCase(receivedData, byteRecv);
+
       printf("Response to be sent back to client: ");
       printData(receivedData, byteRecv);
       byteSent = sendto(sfd, receivedData, byteRecv, 0,
